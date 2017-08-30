@@ -1,0 +1,6 @@
+[package]
+name = "gen_iter"
+version = "0.1.0"
+authors = ["tinaun <tinagma@gmail.com>"]
+
+[dependencies]
