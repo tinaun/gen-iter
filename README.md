@@ -1,6 +1,6 @@
 # gen_iter - iterators using generators.
 
-see [the docs](https://docs.rs/gen_iter) for examples and usage.
+see [the docs](https://docs.rs/gen-iter) for examples and usage.
 
 # License
 

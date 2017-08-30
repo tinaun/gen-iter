@@ -1,6 +1,14 @@
 [package]
-name = "gen_iter"
+name = "gen-iter"
 version = "0.1.0"
 authors = ["tinaun <tinagma@gmail.com>"]
+keywords = ["generator", "iterator"]
+description = "temporary util for creating iterators using generators"
+
+documentation = "https://docs.rs/gen-iter"
+repository = "https://github.com/tinaun/gen-iter"
+readme = "README.md"
+
+license = "MIT/Apache-2.0"
 
 [dependencies]
