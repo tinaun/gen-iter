@@ -57,6 +57,41 @@ impl<T: Generator> Iterator for GenIter<T> {
     }
 }
 
+impl<G: Generator> From<G> for GenIter<G> {
+    fn from(gen: G) -> Self {
+        GenIter(gen)
+    }
+}
+
+
+/// macro to simplify iterator - via - generator construction
+///
+/// ```
+/// # #![feature(generators)];
+/// # #[macro_use]
+/// # extern crate gen_iter;
+/// # fn main() {
+/// let mut g = gen_iter! {
+///     yield 1;
+///     yield 2;
+/// };
+///
+///
+/// assert_eq!(g.next(), Some(1));
+/// assert_eq!(g.next(), Some(2));
+/// assert_eq!(g.next(), None);
+///
+///
+/// # }
+/// ```
+#[macro_export]
+macro_rules! gen_iter {
+    ($($exp:tt)*) => {
+        ::gen_iter::GenIter(|| {
+            $($exp)* 
+        })
+    }
+}
 
 
 #[cfg(test)]
@@ -69,6 +104,18 @@ mod tests {
             yield 1;
             yield 2;
         });
+
+        assert_eq!(g.next(), Some(1));
+        assert_eq!(g.next(), Some(2));
+        assert_eq!(g.next(), None);
+    }
+
+    #[test]
+    fn into_gen_iter() {
+        let mut g: GenIter<_> = (|| {
+            yield 1;
+            yield 2;
+        }).into();
 
         assert_eq!(g.next(), Some(1));
         assert_eq!(g.next(), Some(2));
