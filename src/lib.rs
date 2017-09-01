@@ -1,8 +1,7 @@
 //! # gen_iter - create generators to use as iterators
-//! 
+//!
 //! `GenIter` converts a generator into an iterator over the
-//! yielded type of the generator. the return type of the generator
-//! , if any, is ignored.
+//! yielded type of the generator. The return type of the generator needs to be `()`.
 //!
 //! ```
 //! #![feature(generators)]
@@ -20,7 +19,7 @@
 //!             let c = a + b;
 //!             a = b;
 //!             b = c;
-//!             
+//!
 //!             yield a;
 //!         }
 //!     })
@@ -44,20 +43,29 @@ use std::iter::Iterator;
 /// the iteration state
 #[derive(Copy, Clone, Debug)]
 pub struct GenIter<T>(pub T)
-    where T: Generator;
+where
+    T: Generator<Return = ()>;
 
-impl<T: Generator> Iterator for GenIter<T> {
-    type Item = <T as Generator>::Yield;
+impl<T> Iterator for GenIter<T>
+where
+    T: Generator<Return = ()>,
+{
+    type Item = T::Yield;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.resume() {
             GeneratorState::Yielded(n) => Some(n),
-            GeneratorState::Complete(_) => None,
+            GeneratorState::Complete(()) => None,
         }
     }
 }
 
-impl<G: Generator> From<G> for GenIter<G> {
+impl<G> From<G> for GenIter<G>
+where
+    G: Generator<Return = ()>,
+{
+    #[inline]
     fn from(gen: G) -> Self {
         GenIter(gen)
     }
