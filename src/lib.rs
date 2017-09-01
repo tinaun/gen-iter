@@ -95,8 +95,8 @@ where
 #[macro_export]
 macro_rules! gen_iter {
     ($($exp:tt)*) => {
-        ::gen_iter::GenIter(|| {
-            $($exp)* 
+        $crate::GenIter(|| {
+            $($exp)*
         })
     }
 }
@@ -124,6 +124,18 @@ mod tests {
             yield 1;
             yield 2;
         }).into();
+
+        assert_eq!(g.next(), Some(1));
+        assert_eq!(g.next(), Some(2));
+        assert_eq!(g.next(), None);
+    }
+
+    #[test]
+    fn gen_iter_macro() {
+        let mut g = gen_iter!{
+            yield 1;
+            yield 2;
+        };
 
         assert_eq!(g.next(), Some(1));
         assert_eq!(g.next(), Some(2));
