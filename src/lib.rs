@@ -92,6 +92,9 @@ where
 macro_rules! gen_iter {
     ($block: block) => {
         $crate::GenIter(|| $block)
+    };
+    (move $block: block) => {
+        $crate::GenIter(move || $block)
     }
 }
 
