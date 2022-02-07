@@ -1,6 +1,6 @@
 [package]
 name = "gen-iter"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["tinaun <tinagma@gmail.com>"]
 keywords = ["generator", "iterator"]
 description = "temporary util for creating iterators using generators"
