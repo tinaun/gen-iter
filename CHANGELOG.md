@@ -1,3 +1,9 @@
+# version 0.2.1
+* added `move` varient of gen-iter (#4)
+
+# version 0.2
+* updated to latest rust generator syntax
+
 # version 0.1.2
 * impl `From<Generator>` for GenIter
 * added `gen_iter!` convienence macro
