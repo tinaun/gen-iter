@@ -3,7 +3,8 @@ use core::iter::{Iterator, FusedIterator};
 use core::marker::Unpin;
 use core::pin::Pin;
 
-/// `GenIterReturn<G>` is a iterator for generator with return value.
+/// `GenIterReturn<G>` holds a generator `G` or the return value of `G`,
+/// `&mut GenIterReturn<G>` acts as an iterator.
 /// 
 /// Differences with `GenIter<G>`:
 /// 1. able to get return value of a generator
@@ -35,11 +36,12 @@ impl<G: Generator + Unpin> GenIterReturn<G> {
 /// Force use `&mut g` as iterator to prevent the code below,
 /// in which return value cannot be got.
 /// ```compile_fail
+/// // !!INVALID CODE!!
 /// # #![feature(generators)]
 /// # use gen_iter::gen_iter_return;
-/// let mut g = gen_iter_return!({ yield 1; return "done"; }
+/// let mut g = gen_iter_return!({ yield 1; return "done"; });
 /// for v in g {} // invalid, because `GenIterReturn<G>` is not `Iterator`
-/// let ret = g.return_or_self().unwrap(); // g is dropped after for
+/// let ret = g.return_or_self(); // g is dropped after for loop
 /// ```
 impl<G: Generator + Unpin> Iterator for &mut GenIterReturn<G> {
     type Item = G::Yield;

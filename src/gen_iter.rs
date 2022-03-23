@@ -3,7 +3,7 @@ use core::iter::Iterator;
 use core::marker::Unpin;
 use core::pin::Pin;
 
-/// a iterator that holds an internal generator representing
+/// an iterator that holds an internal generator representing
 /// the iteration state
 #[derive(Copy, Clone, Debug)]
 pub struct GenIter<T>(pub T)

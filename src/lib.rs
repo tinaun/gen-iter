@@ -1,11 +1,13 @@
 //! # gen_iter - create generators to use as iterators
 //!
-//! `GenIter` converts a generator into an iterator over the
+//! ## [`GenIter`] and [`gen_iter!`]
+//! [`GenIter`] converts a [`Generator<(), Return=()>`](core::ops::Generator) into an iterator over the
 //! yielded type of the generator. The return type of the generator needs to be `()`.
+//! 
+//! [`gen_iter!`] helps to create a [`GenIter`]
 //!
 //! ```
 //! #![feature(generators)]
-//! #![feature(conservative_impl_trait)]
 //!
 //! use gen_iter::gen_iter;
 //!
@@ -29,9 +31,12 @@
 //! }
 //! ```
 //! 
-//! `GenIterReturn` can be converted from a `Generator<()>`,
-//! `&mut GenIterReturn` can be used as iterator.
-//! The return value of the generator can be got after the iterator is done.
+//! ## [`GenIterReturn`] and [`gen_iter_return!`]
+//! [`GenIterReturn`] can be converted from a [`Generator<()>`](core::ops::Generator),
+//! `&mut GenIterReturn<G>` can be used as iterator.
+//! The return value of the generator can be got after the iterator is exhausted.
+//! 
+//! [`gen_iter_return!`] helps to create a [`GenIterReturn`].
 //! 
 //! ```
 //! #![feature(generators)]
