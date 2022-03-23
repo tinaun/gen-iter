@@ -30,13 +30,14 @@
 //! ```
 //!
 
+#![no_std]
 #![feature(generators, generator_trait)]
 // #![feature(conservative_impl_trait)]
 
-use std::ops::{Generator, GeneratorState};
-use std::iter::Iterator;
-use std::marker::Unpin;
-use std::pin::Pin;
+use core::ops::{Generator, GeneratorState};
+use core::iter::Iterator;
+use core::marker::Unpin;
+use core::pin::Pin;
 
 /// a iterator that holds an internal generator representing
 /// the iteration state
