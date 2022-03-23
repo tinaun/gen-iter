@@ -32,6 +32,15 @@ impl<G: Generator + Unpin> GenIterReturn<G> {
     }
 }
 
+/// Force use `&mut g` as iterator to prevent the code below,
+/// in which return value cannot be got.
+/// ```compile_fail
+/// # #![feature(generators)]
+/// # use gen_iter::gen_iter_return;
+/// let mut g = gen_iter_return!({ yield 1; return "done"; }
+/// for v in g {} // invalid, because `GenIterReturn<G>` is not `Iterator`
+/// let ret = g.return_or_self().unwrap(); // g is dropped after for
+/// ```
 impl<G: Generator + Unpin> Iterator for &mut GenIterReturn<G> {
     type Item = G::Yield;
 
@@ -50,6 +59,7 @@ impl<G: Generator + Unpin> Iterator for &mut GenIterReturn<G> {
     }
 }
 
+/// `GenIterReturn<G>` satisfies the trait `FusedIterator`
 impl<G: Generator + Unpin> FusedIterator for &mut GenIterReturn<G> {}
 
 impl<G: Generator + Unpin> From<G> for GenIterReturn<G> {
@@ -60,8 +70,6 @@ impl<G: Generator + Unpin> From<G> for GenIterReturn<G> {
 }
 
 /// macro to simplify iterator - via - generator with return value construction
-///
-/// Examples:
 /// ```
 /// #![feature(generators)]
 ///
@@ -78,19 +86,6 @@ impl<G: Generator + Unpin> From<G> for GenIterReturn<G> {
 /// assert_eq!((&mut g).next(), None); // safe to call `next()` after done
 /// assert_eq!(g.return_or_self().ok(), Some("done")); // get return value of generator
 /// ```
-/// We should use `&mut g` in `for` statement, to keep `g` be valid after `for`, so we can get the return value.
-/// ```compile_fail
-/// #![feature(generators)]
-///
-/// use gen_iter::gen_iter_return;
-///
-/// let mut g = gen_iter_return!({
-///     yield 1;
-///     yield 2;
-///     return "done";
-/// });
-/// for v in g {} // compile failed, should use `&mut g`
-/// ```
 #[macro_export]
 macro_rules! gen_iter_return {
     ($block: block) => {
@@ -105,57 +100,55 @@ macro_rules! gen_iter_return {
 mod tests {
     use super::GenIterReturn;
 
+    /// test `new` and all instance method,
+    /// and show that it won't panic when call `next()` even exhausted.
     #[test]
     fn it_works() {
-        let mut g = gen_iter_return!({
+        let mut g = GenIterReturn::new(|| {
             yield 1;
-            yield 2;
             return "done";
         });
 
         assert_eq!((&mut g).next(), Some(1));
         assert_eq!(g.is_done(), false);
-        assert_eq!((&mut g).next(), Some(2));
-        assert_eq!(g.is_done(), false);
+
         assert_eq!((&mut g).next(), None);
         assert_eq!(g.is_done(), true);
-        assert_eq!((&mut g).next(), None);
+
+        assert_eq!((&mut g).next(), None); // it won't panic when call `next()` even exhausted.
+
         assert_eq!(g.return_or_self().ok(), Some("done"));
     }
 
     #[test]
-    fn gen_iter_return_from() {
+    fn test_from() {
         let mut g: GenIterReturn<_> = GenIterReturn::from(|| {
             yield 1;
-            yield 2;
             return "done";
         });
-        let mut gi = &mut g;
 
-        assert_eq!(gi.next(), Some(1));
-        assert_eq!(gi.next(), Some(2));
-        assert_eq!(gi.next(), None);
+        assert_eq!((&mut g).next(), Some(1));
+        assert_eq!((&mut g).next(), None);
 
         assert_eq!(g.is_done(), true);
         assert_eq!(g.return_or_self().ok(), Some("done"));
     }
 
+    /// normal usage using macro `gen_iter_return`
     #[test]
-    fn gen_iter_return_macro() {
+    fn test_macro() {
         let mut g = gen_iter_return!({
             yield 1;
             yield 2;
             return "done";
         });
 
-        let mut sum = 0;
-        let mut count = 0;
+        let (mut sum, mut count) = (0, 0);
         for y in &mut g {
             sum += y;
             count += 1;
         }
-        assert_eq!(sum, 3);
-        assert_eq!(count, 2);
+        assert_eq!((sum, count), (3, 2));
 
         assert_eq!(g.is_done(), true);
         assert_eq!(g.return_or_self().ok(), Some("done"));
