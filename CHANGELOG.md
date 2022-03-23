@@ -1,3 +1,7 @@
+# unreleased
+* made the crate no_std compatible (#5)
+* added struct GenIterReturn and macro gen_iter_return! to iterate over a generator and get the return value (#6)
+
 # version 0.2.1
 * added `move` varient of gen-iter (#4)
 
