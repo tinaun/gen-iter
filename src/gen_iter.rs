@@ -82,10 +82,10 @@ mod tests {
 
     #[test]
     fn into_gen_iter() {
-        let mut g: GenIter<_> = gen_iter!({
+        let mut g: GenIter<_> = (|| {
             yield 1;
             yield 2;
-        });
+        }).into();
 
         assert_eq!(g.next(), Some(1));
         assert_eq!(g.next(), Some(2));
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn gen_iter_macro() {
-        let mut g = gen_iter!({
+        let mut g = gen_iter!(move {
             yield 1;
             yield 2;
         });

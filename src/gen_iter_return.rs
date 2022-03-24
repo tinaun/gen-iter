@@ -114,6 +114,11 @@ mod tests {
         assert_eq!((&mut g).next(), Some(1));
         assert_eq!(g.is_done(), false);
 
+        g = match g.return_or_self() {
+            Ok(_) => panic!("generator is done but should not"),
+            Err(g) => g
+        };
+
         assert_eq!((&mut g).next(), None);
         assert_eq!(g.is_done(), true);
 
@@ -123,8 +128,8 @@ mod tests {
     }
 
     #[test]
-    fn test_from() {
-        let mut g: GenIterReturn<_> = GenIterReturn::from(|| {
+    fn from_generator() {
+        let mut g = GenIterReturn::from(|| {
             yield 1;
             return "done";
         });
@@ -138,8 +143,8 @@ mod tests {
 
     /// normal usage using macro `gen_iter_return`
     #[test]
-    fn test_macro() {
-        let mut g = gen_iter_return!({
+    fn macro_usage() {
+        let mut g = gen_iter_return!(move {
             yield 1;
             yield 2;
             return "done";
