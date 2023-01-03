@@ -1,11 +1,13 @@
 //! # gen_iter - create generators to use as iterators
 //!
-//! `GenIter` converts a generator into an iterator over the
+//! ## [`GenIter`] and [`gen_iter!`]
+//! [`GenIter`] converts a [`Generator<(), Return=()>`](core::ops::Generator) into an iterator over the
 //! yielded type of the generator. The return type of the generator needs to be `()`.
+//! 
+//! [`gen_iter!`] helps to create a [`GenIter`]
 //!
 //! ```
 //! #![feature(generators)]
-//! #![feature(conservative_impl_trait)]
 //!
 //! use gen_iter::gen_iter;
 //!
@@ -28,115 +30,38 @@
 //!     println!("{}", elem);
 //! }
 //! ```
+//! 
+//! ## [`GenIterReturn`] and [`gen_iter_return!`]
+//! [`GenIterReturn`] can be converted from a [`Generator<()>`](core::ops::Generator),
+//! `&mut GenIterReturn<G>` can be used as iterator.
+//! The return value of the generator can be got after the iterator is exhausted.
+//! 
+//! [`gen_iter_return!`] helps to create a [`GenIterReturn`].
+//! 
+//! ```
+//! #![feature(generators)]
 //!
+//! use gen_iter::gen_iter_return;
+//!
+//! let mut g = gen_iter_return!({
+//!     yield 1;
+//!     yield 2;
+//!     return "done";
+//! });
+//! 
+//! for y in &mut g {
+//!     println!("yield {}", y);
+//! }
+//! println!("generator is_done={}", g.is_done()); // true
+//! println!("generator returns {}", g.return_or_self().ok().unwrap()); // "done"
+//! ```
 
 #![no_std]
 #![feature(generators, generator_trait)]
 // #![feature(conservative_impl_trait)]
 
-use core::ops::{Generator, GeneratorState};
-use core::iter::Iterator;
-use core::marker::Unpin;
-use core::pin::Pin;
+mod gen_iter;
+pub use gen_iter::*;
 
-/// a iterator that holds an internal generator representing
-/// the iteration state
-#[derive(Copy, Clone, Debug)]
-pub struct GenIter<T>(pub T)
-where
-    T: Generator<Return = ()> + Unpin;
-
-impl<T> Iterator for GenIter<T>
-where
-    T: Generator<Return = ()> + Unpin,
-{
-    type Item = T::Yield;
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        match Pin::new(&mut self.0).resume(()) {
-            GeneratorState::Yielded(n) => Some(n),
-            GeneratorState::Complete(()) => None,
-        }
-    }
-}
-
-impl<G> From<G> for GenIter<G>
-where
-    G: Generator<Return = ()> + Unpin,
-{
-    #[inline]
-    fn from(gen: G) -> Self {
-        GenIter(gen)
-    }
-}
-
-
-/// macro to simplify iterator - via - generator construction
-///
-/// ```
-/// #![feature(generators)]
-///
-/// use gen_iter::gen_iter;
-///
-/// let mut g = gen_iter!({
-///     yield 1;
-///     yield 2;
-/// });
-///
-/// assert_eq!(g.next(), Some(1));
-/// assert_eq!(g.next(), Some(2));
-/// assert_eq!(g.next(), None);
-///
-/// ```
-#[macro_export]
-macro_rules! gen_iter {
-    ($block: block) => {
-        $crate::GenIter(|| $block)
-    };
-    (move $block: block) => {
-        $crate::GenIter(move || $block)
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::GenIter;
-
-    #[test]
-    fn it_works() {
-        let mut g = gen_iter!({
-            yield 1;
-            yield 2;
-        });
-
-        assert_eq!(g.next(), Some(1));
-        assert_eq!(g.next(), Some(2));
-        assert_eq!(g.next(), None);
-    }
-
-    #[test]
-    fn into_gen_iter() {
-        let mut g: GenIter<_> = gen_iter!({
-            yield 1;
-            yield 2;
-        });
-
-        assert_eq!(g.next(), Some(1));
-        assert_eq!(g.next(), Some(2));
-        assert_eq!(g.next(), None);
-    }
-
-    #[test]
-    fn gen_iter_macro() {
-        let mut g = gen_iter!({
-            yield 1;
-            yield 2;
-        });
-
-        assert_eq!(g.next(), Some(1));
-        assert_eq!(g.next(), Some(2));
-        assert_eq!(g.next(), None);
-    }
-}
+mod gen_iter_return;
+pub use gen_iter_return::*;
