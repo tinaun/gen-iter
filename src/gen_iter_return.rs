@@ -20,12 +20,12 @@ impl<G: Generator + Unpin> GenIterReturn<G> {
     }
 
     #[inline]
-    pub fn is_done(&self) -> bool {
+    pub fn is_complete(&self) -> bool {
         self.0.is_ok()
     }
 
     #[inline]
-    pub fn return_or_self(self) -> Result<G::Return, Self> {
+    pub fn try_get_return(self) -> Result<G::Return, Self> {
         match self.0 {
             Ok(r) => Ok(r),
             Err(_) => Err(self),
@@ -41,7 +41,7 @@ impl<G: Generator + Unpin> GenIterReturn<G> {
 /// # use gen_iter::gen_iter_return;
 /// let mut g = gen_iter_return!({ yield 1; return "done"; });
 /// for v in g {} // invalid, because `GenIterReturn<G>` is not `Iterator`
-/// let ret = g.return_or_self(); // g is dropped after for loop
+/// let ret = g.try_get_return(); // g is dropped after for loop
 /// ```
 impl<G: Generator + Unpin> Iterator for &mut GenIterReturn<G> {
     type Item = G::Yield;
@@ -84,9 +84,9 @@ impl<G: Generator + Unpin> From<G> for GenIterReturn<G> {
 /// });
 ///
 /// assert_eq!((&mut g).collect::<Vec<_>>(), [1, 2]); // use `&mut g` as an iterator
-/// assert_eq!(g.is_done(), true); // check whether generator is done
+/// assert_eq!(g.is_complete(), true); // check whether generator is done
 /// assert_eq!((&mut g).next(), None); // safe to call `next()` after done
-/// assert_eq!(g.return_or_self().ok(), Some("done")); // get return value of generator
+/// assert_eq!(g.try_get_return().ok(), Some("done")); // get return value of generator
 /// ```
 #[macro_export]
 macro_rules! gen_iter_return {
@@ -112,19 +112,16 @@ mod tests {
         });
 
         assert_eq!((&mut g).next(), Some(1));
-        assert_eq!(g.is_done(), false);
+        assert_eq!(g.is_complete(), false);
 
-        g = match g.return_or_self() {
-            Ok(_) => panic!("generator is done but should not"),
-            Err(g) => g
-        };
+        g = g.try_get_return().expect_err("unexpected generator state: is_complete");
 
         assert_eq!((&mut g).next(), None);
-        assert_eq!(g.is_done(), true);
+        assert_eq!(g.is_complete(), true);
 
         assert_eq!((&mut g).next(), None); // it won't panic when call `next()` even exhausted.
 
-        assert_eq!(g.return_or_self().ok(), Some("done"));
+        assert_eq!(g.try_get_return().ok(), Some("done"));
     }
 
     #[test]
@@ -137,8 +134,8 @@ mod tests {
         assert_eq!((&mut g).next(), Some(1));
         assert_eq!((&mut g).next(), None);
 
-        assert_eq!(g.is_done(), true);
-        assert_eq!(g.return_or_self().ok(), Some("done"));
+        assert_eq!(g.is_complete(), true);
+        assert_eq!(g.try_get_return().ok(), Some("done"));
     }
 
     /// normal usage using macro `gen_iter_return`
@@ -157,8 +154,8 @@ mod tests {
         }
         assert_eq!((sum, count), (3, 2));
 
-        assert_eq!(g.is_done(), true);
-        assert_eq!(g.return_or_self().ok(), Some("done"));
+        assert_eq!(g.is_complete(), true);
+        assert_eq!(g.try_get_return().ok(), Some("done"));
     }
 
     /// test customize generator using `impl Generator` which is `!Unpin`
@@ -196,15 +193,15 @@ mod tests {
         let mut g = GenIterReturn::new(pin_g);
 
         assert_eq!((&mut g).next(), Some(1));
-        assert_eq!(g.is_done(), false);
+        assert_eq!(g.is_complete(), false);
 
-        g = g.return_or_self().expect_err("generator is done but should not");
+        g = g.try_get_return().expect_err("unexpected generator state: is_complete");
 
         assert_eq!((&mut g).next(), None);
-        assert_eq!(g.is_done(), true);
+        assert_eq!(g.is_complete(), true);
 
         assert_eq!((&mut g).next(), None); // it won't panic when call `next()` even exhausted.
 
-        assert_eq!(g.return_or_self().ok(), Some("done"));
+        assert_eq!(g.try_get_return().ok(), Some("done"));
     }
 }

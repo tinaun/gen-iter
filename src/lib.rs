@@ -52,8 +52,8 @@
 //! for y in &mut g {
 //!     println!("yield {}", y);
 //! }
-//! println!("generator is_done={}", g.is_done()); // true
-//! println!("generator returns {}", g.return_or_self().ok().unwrap()); // "done"
+//! println!("generator is_complete={}", g.is_complete()); // true
+//! println!("generator returns {}", g.try_get_return().ok().unwrap()); // "done"
 //! ```
 
 #![no_std]
