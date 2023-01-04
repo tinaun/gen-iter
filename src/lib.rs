@@ -58,7 +58,6 @@
 
 #![no_std]
 #![feature(generators, generator_trait)]
-// #![feature(conservative_impl_trait)]
 
 mod gen_iter;
 pub use gen_iter::*;
