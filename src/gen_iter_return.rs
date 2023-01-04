@@ -160,4 +160,51 @@ mod tests {
         assert_eq!(g.is_done(), true);
         assert_eq!(g.return_or_self().ok(), Some("done"));
     }
+
+    /// test customize generator using `impl Generator` which is `!Unpin`
+    #[test]
+    fn impl_generator_not_unpin() {  
+        use core::ops::{Generator, GeneratorState};
+        use core::iter::Iterator;
+        use core::marker::PhantomPinned;
+        use core::pin::Pin;
+        use core::cell::RefCell;
+
+        #[derive(Clone, Debug)]
+        struct G(RefCell<i32>, PhantomPinned);
+        impl G {
+            pub fn new(v: i32) -> Self {
+                G(RefCell::new(v), PhantomPinned)
+            }
+        }
+        impl Generator for G {
+            type Yield = i32;
+            type Return = &'static str;
+            fn resume(self: Pin<&mut Self>, _: ()) -> GeneratorState<Self::Yield, Self::Return> {
+                let v = *self.0.borrow();
+                if v > 0 {
+                    *self.0.borrow_mut() -= 1;
+                    GeneratorState::Yielded(v)
+                } else {
+                    GeneratorState::Complete("done")
+                }
+            }
+        }
+  
+        let mut g = G::new(1);
+        let pin_g = unsafe { Pin::new_unchecked(&mut g) };
+        let mut g = GenIterReturn::new(pin_g);
+
+        assert_eq!((&mut g).next(), Some(1));
+        assert_eq!(g.is_done(), false);
+
+        g = g.return_or_self().expect_err("generator is done but should not");
+
+        assert_eq!((&mut g).next(), None);
+        assert_eq!(g.is_done(), true);
+
+        assert_eq!((&mut g).next(), None); // it won't panic when call `next()` even exhausted.
+
+        assert_eq!(g.return_or_self().ok(), Some("done"));
+    }
 }
