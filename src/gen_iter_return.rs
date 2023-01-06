@@ -8,7 +8,7 @@ use core::pin::Pin;
 /// 
 /// Differences with `GenIter<G>`:
 /// 1. able to get return value of a generator
-/// 2. safe to call `next()` after generator is done without panic
+/// 2. safe to call `next()` without panic after generator is complete
 /// 3. maybe less efficient than `GenIter<G>`
 #[derive(Copy, Clone, Debug)]
 pub struct GenIterReturn<G: Generator + Unpin>(Result<G::Return, G>);
@@ -140,7 +140,7 @@ mod tests {
 
     /// normal usage using macro `gen_iter_return`
     #[test]
-    fn macro_usage() {
+    fn gen_iter_return_macro() {
         let mut g = gen_iter_return!(move {
             yield 1;
             yield 2;
@@ -155,53 +155,6 @@ mod tests {
         assert_eq!((sum, count), (3, 2));
 
         assert_eq!(g.is_complete(), true);
-        assert_eq!(g.try_get_return().ok(), Some("done"));
-    }
-
-    /// test customize generator using `impl Generator` which is `!Unpin`
-    #[test]
-    fn impl_generator_not_unpin() {  
-        use core::ops::{Generator, GeneratorState};
-        use core::iter::Iterator;
-        use core::marker::PhantomPinned;
-        use core::pin::Pin;
-        use core::cell::RefCell;
-
-        #[derive(Clone, Debug)]
-        struct G(RefCell<i32>, PhantomPinned);
-        impl G {
-            pub fn new(v: i32) -> Self {
-                G(RefCell::new(v), PhantomPinned)
-            }
-        }
-        impl Generator for G {
-            type Yield = i32;
-            type Return = &'static str;
-            fn resume(self: Pin<&mut Self>, _: ()) -> GeneratorState<Self::Yield, Self::Return> {
-                let v = *self.0.borrow();
-                if v > 0 {
-                    *self.0.borrow_mut() -= 1;
-                    GeneratorState::Yielded(v)
-                } else {
-                    GeneratorState::Complete("done")
-                }
-            }
-        }
-  
-        let mut g = G::new(1);
-        let pin_g = unsafe { Pin::new_unchecked(&mut g) };
-        let mut g = GenIterReturn::new(pin_g);
-
-        assert_eq!((&mut g).next(), Some(1));
-        assert_eq!(g.is_complete(), false);
-
-        g = g.try_get_return().expect_err("unexpected generator state: is_complete");
-
-        assert_eq!((&mut g).next(), None);
-        assert_eq!(g.is_complete(), true);
-
-        assert_eq!((&mut g).next(), None); // it won't panic when call `next()` even exhausted.
-
         assert_eq!(g.try_get_return().ok(), Some("done"));
     }
 }

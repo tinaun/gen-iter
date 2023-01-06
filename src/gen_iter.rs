@@ -103,34 +103,4 @@ mod tests {
         assert_eq!(g.next(), Some(2));
         assert_eq!(g.next(), None);
     }
-
-    /// test customize generator using `impl Generator`
-    #[test]
-    fn impl_generator() {  
-        use core::ops::{Generator, GeneratorState};
-        use core::iter::Iterator;
-        use core::pin::Pin;
-
-        #[derive(Clone, Debug)]
-        struct G(i32);
-        impl Generator for G {
-            type Yield = i32;
-            type Return = ();
-            fn resume(mut self: Pin<&mut Self>, _: ()) -> GeneratorState<Self::Yield, Self::Return> {
-                let v = self.0;
-                if v > 0 {
-                    self.0 = v - 1;
-                    GeneratorState::Yielded(v)
-                } else {
-                    GeneratorState::Complete(())
-                }
-            }
-        }
-  
-        let g = G(1);
-        let mut g = GenIter(g);
-
-        assert_eq!((&mut g).next(), Some(1));
-        assert_eq!((&mut g).next(), None);
-    }
 }

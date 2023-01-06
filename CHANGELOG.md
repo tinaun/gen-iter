@@ -1,3 +1,10 @@
+# version 0.4.1
+* tests refactorings, now it's 100% test coverage
+  - unit tests in 'src/' just use `core::*`
+  - integration tests in 'tests/' can use `std::*`
+  - move 'impl_generator' tests to 'tests/'
+  - add test for `#[derive(Debug)]` in 'impl_generator' tests
+
 # version 0.4.0
 * incompatible refactorings for `GenIterReturn`:
   - rename `GenIterReturn::is_done()` to `GenIterReturn::is_complete()`

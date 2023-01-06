@@ -19,7 +19,6 @@ fn gen_iter_clone() {
     assert_eq!((&mut g).next(), None);
 }
 
-    
 #[test]
 fn gen_iter_return_clone() {
     let mut g = gen_iter_return!(move {
